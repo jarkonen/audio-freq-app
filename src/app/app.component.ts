@@ -1,68 +1,81 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common'; // Importa CommonModul
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
+  imports: [CommonModule],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
-  
+  styleUrls: ['./app.component.css']
 })
-export class AppComponent {
-  title = 'audio-freq-app';
+export class AppComponent implements OnInit, OnDestroy {
   frequency: number = 0;
-  isCapturing: boolean = false;
-  audioContext: AudioContext | null = null;
-  analyserNode: AnalyserNode | null = null;
-  microphoneStream: MediaStream | null = null;
+  isCapturing = false;
+  private frequencySubject = new BehaviorSubject<number>(0);
+  private frequencySubscription!: Subscription;
+  private audioContext: AudioContext | null = null;
+  private analyserNode: AnalyserNode | null = null;
+  private microphoneStream: MediaStream | null = null;
 
-  // Inicia la captura de audio desde el micrófono
-  startAudioCapture() {
-    if (this.isCapturing) return;
+  getFrequency(): Observable<number> {
+    return this.frequencySubject.asObservable();
+  }
 
-    this.isCapturing = true;
-
+  startAudioCapture(): void {
+    if (this.audioContext) return;
+    
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         this.microphoneStream = stream;
-
-        // Crea el AudioContext
         this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        
-        // Conecta el micrófono a un AnalizerNode
         const sourceNode = this.audioContext.createMediaStreamSource(stream);
         this.analyserNode = this.audioContext.createAnalyser();
         sourceNode.connect(this.analyserNode);
-        
-        // Configura el AnalyserNode
-        this.analyserNode.fftSize = 2048; // tamaño de la FFT
+        this.analyserNode.fftSize = 2048;
+
         const bufferLength = this.analyserNode.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
-        // Función para analizar las frecuencias
         const analyze = () => {
-          this.analyserNode?.getByteFrequencyData(dataArray);
-          let maxFreq = Math.max(...dataArray);
-          this.frequency = maxFreq;
-          requestAnimationFrame(analyze); // Llama a esta función en el siguiente frame
+          if (!this.analyserNode) return;
+          this.analyserNode.getByteFrequencyData(dataArray);
+          const maxFreq = Math.max(...dataArray);
+          this.frequencySubject.next(maxFreq);
+          requestAnimationFrame(analyze);
         };
 
         analyze();
       })
-      .catch(err => {
-        console.error('Error al acceder al micrófono:', err);
-        this.isCapturing = false;
-      });
+      .catch(err => console.error('Error al acceder al micrófono:', err));
   }
 
-  // Detiene la captura de audio
-  stopAudioCapture() {
-    if (this.microphoneStream) {
-      const tracks = this.microphoneStream.getTracks();
-      tracks.forEach(track => track.stop());
-    }
+  stopAudioCapture(): void {
+    this.microphoneStream?.getTracks().forEach(track => track.stop());
+    this.audioContext?.close();
+    this.audioContext = null;
+    this.analyserNode = null;
+    this.microphoneStream = null;
+    this.frequencySubject.next(0);
+  }
+
+  ngOnInit(): void {
+    this.frequencySubscription = this.getFrequency().subscribe(freq => {
+      this.frequency = freq;
+    });
+  }
+
+  startCapture(): void {
+    this.isCapturing = true;
+    this.startAudioCapture();
+  }
+
+  stopCapture(): void {
     this.isCapturing = false;
+    this.stopAudioCapture();
+  }
+
+  ngOnDestroy(): void {
+    this.frequencySubscription.unsubscribe();
   }
 }

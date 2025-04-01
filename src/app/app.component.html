@@ -1,7 +1,4 @@
-<div class="container">
-  <h1>Frecuencia Máxima del Micrófono</h1>
-  <button (click)="isCapturing ? stopAudioCapture() : startAudioCapture()">
-    {{ isCapturing ? 'Detener Captura' : 'Iniciar Captura' }}
-  </button>
-  <p *ngIf="isCapturing">Frecuencia Máxima: {{ frequency }}</p>
-</div>
+<h1>Frecuencia de Audio: {{ frequency }} Hz</h1>
+<p *ngIf="isCapturing">Frecuencia Máxima: {{ frequency }}</p>
+<button (click)="startCapture()" [disabled]="isCapturing">Iniciar Captura</button>
+<button (click)="stopCapture()" [disabled]="!isCapturing">Detener Captura</button>
