@@ -63,7 +63,7 @@ export class AudioService {
     update();
   }
 
-  private autoCorrelate(buffer: Float32Array, sampleRate: number): number | null {
+  public autoCorrelate(buffer: Float32Array, sampleRate: number): number | null {
     const SIZE = buffer.length;
     let rms = 0;
   
