@@ -41,7 +41,6 @@ export function autoCorrelate(buffer: Float32Array, sampleRate: number): number 
     if (maxpos <= 0) return null;
   
     const frequency = sampleRate / maxpos;
-    if (frequency < 80 || frequency > 1200) return null;
     return frequency;
   }
   

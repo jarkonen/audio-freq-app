@@ -1,20 +1,15 @@
 import { autoCorrelate } from './autocorrelate';
+import { a1Mock1 } from '../__mocks__/a1.mock1';
 
-describe('autoCorrelate()', () => {
-  function generateSineWave(freq: number, sampleRate: number, durationSeconds: number): Float32Array {
-    const samples = sampleRate * durationSeconds;
-    const buffer = new Float32Array(samples);
-    for (let i = 0; i < samples; i++) {
-      buffer[i] = Math.sin(2 * Math.PI * freq * (i / sampleRate));
-    }
-    return buffer;
-  }
+describe('autoCorrelate', () => {
+  it('debería detectar una frecuencia cercana a 55Hz para el mock A1', () => {
+    const buffer = new Float32Array(a1Mock1);
+    const sampleRate = 48000;
 
-  it('detecta ~440Hz en una onda senoidal', () => {
-    const sampleRate = 44100;
-    const buffer = generateSineWave(440, sampleRate, 1);
-    const result = autoCorrelate(buffer, sampleRate);
-    expect(result).toBeGreaterThanOrEqual(435);
-    expect(result).toBeLessThanOrEqual(445);
+    const freq = autoCorrelate(buffer, sampleRate);
+
+    expect(freq).not.toBeNull();
+    expect(freq!).toBeGreaterThan(50);
+    expect(freq!).toBeLessThan(60);
   });
 });
