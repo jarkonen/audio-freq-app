@@ -1,5 +1,5 @@
 import { autoCorrelate } from './autocorrelate';
-import { a1Mock1 } from '../__mocks__/a1.mock1';
+import { a1Mock1 } from '../__mocks__/mocks/piano-mock-audio-buffers/a1/a1.mock1';
 
 describe('autoCorrelate', () => {
   it('debería detectar una frecuencia cercana a 55Hz para el mock A1', () => {
