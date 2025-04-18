@@ -9,6 +9,56 @@ export class AudioService {
   private analyserNode: AnalyserNode | null = null;
   private microphoneStream: MediaStream | null = null;
   private frequencySubject = new BehaviorSubject<number>(0);
+  private frequencyBuffer: number[] = [];
+  private bufferSize: number = 100;
+  private bufferIndex: number = 0;
+
+  private statsSubject = new BehaviorSubject<{
+    media: number;
+    mediana: number;
+    desviacionTipica: number;
+  } | null>(null);
+
+  getStats(): Observable<{
+    media: number;
+    mediana: number;
+    desviacionTipica: number;
+  } | null> {
+    return this.statsSubject.asObservable();
+  }
+
+  private handleFrequency(freq: number): void {
+    if (freq != null && !isNaN(freq)) {
+      if (this.frequencyBuffer.length < this.bufferSize) {
+        this.frequencyBuffer.push(freq);
+      } else {
+        this.frequencyBuffer[this.bufferIndex] = freq;
+        this.bufferIndex = (this.bufferIndex + 1) % this.bufferSize;
+      }
+  
+      if (this.frequencyBuffer.length === this.bufferSize) {
+        this.calculateStats();
+      }
+    }
+  }
+  
+  private calculateStats(): void {
+    const sorted = [...this.frequencyBuffer].sort((a, b) => a - b);
+    const n = sorted.length;
+  
+    const media = sorted.reduce((sum, val) => sum + val, 0) / n;
+  
+    const mediana = n % 2 === 0
+      ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+      : sorted[Math.floor(n / 2)];
+  
+    const varianza = sorted.reduce((sum, val) => sum + Math.pow(val - media, 2), 0) / n;
+    const desviacionTipica = Math.sqrt(varianza);
+  
+    this.statsSubject.next({ media, mediana, desviacionTipica });
+  }
+  
+
 
   getFrequency(): Observable<number> {
     return this.frequencySubject.asObservable();
@@ -56,6 +106,7 @@ export class AudioService {
       if (freq) {
         console.log('Emitiendo frecuencia sin filtro:', freq);
         this.frequencySubject.next(freq);
+        this.handleFrequency(freq);
       }
       
 

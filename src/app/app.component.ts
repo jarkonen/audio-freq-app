@@ -2,17 +2,25 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { AudioService } from './services/audio.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, OnDestroy {
   frequency: number = 0;
   isCapturing = false;
+  arraySize: number = 100;
+  frequencies: number[] = [];
+  index: number = 0;
+  media: number | null = null;
+  mediana: number | null = null;
+  desviacionTipica: number | null = null;
+
 
   private frequencySubscription!: Subscription;
   
@@ -22,6 +30,13 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.frequencySubscription = this.audioService.getFrequency()
       .subscribe(freq => this.frequency = freq);
+      this.audioService.getStats().subscribe(stats => {
+        if (stats) {
+          this.media = stats.media;
+          this.mediana = stats.mediana;
+          this.desviacionTipica = stats.desviacionTipica;
+        }
+      });
   }
 
   async startCapture(): Promise<void> {

@@ -10,6 +10,23 @@
   ></div>
 </div>
 <p *ngIf="frequency < 100">🎤 Esperando señal estable...</p>
+<div>
+  <label for="arraySize">Tamaño del array de frecuencias:</label>
+  <input
+    id="arraySize"
+    type="number"
+    [(ngModel)]="arraySize"
+    min="1"
+    placeholder="Tamaño del array"
+  />
+</div>
 <button (click)="startCapture()" [disabled]="isCapturing">Iniciar Captura</button>
 <button (click)="stopCapture()" [disabled]="!isCapturing">Detener Captura</button>
+<div *ngIf="media !== null">
+  <h3>Estadísticas</h3>
+  <p><strong>Media:</strong> {{ media | number:'1.2-2' }} Hz</p>
+  <p><strong>Mediana:</strong> {{ mediana | number:'1.2-2' }} Hz</p>
+  <p><strong>Desviación típica:</strong> {{ desviacionTipica | number:'1.2-2' }} Hz</p>
+</div>
+
 
